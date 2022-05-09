@@ -32,12 +32,11 @@ Options.headless = True
 
 
 def define_money(value):
-    money_type = None
     if money_types['real'] in value:
-        money_type = money_types['real']
+        return money_types['real']
     elif money_types['dollar'] in value:
-        money_type = money_types['dollar']
-    return money_type
+        return money_types['dollar']
+    return None
 
 
 def get_price(class_name, soup, price_type=None) -> str:

@@ -125,6 +125,9 @@ def page_chooser():
     print()
     num_pages = int(
         input('Enter the numbers of pages to search (Default -> 2): ') or 2)
+    
+    print()
+    print('Gathering data from Steam...')
     return page, num_pages
 
 

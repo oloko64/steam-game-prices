@@ -5,6 +5,7 @@ from time import sleep
 from datetime import datetime
 from bs4 import BeautifulSoup as bs4
 from decorators.decorators import timeit
+from selenium.webdriver.firefox.options import Options
 
 
 class Game ():
@@ -23,13 +24,16 @@ pages_to_search = 2
 money_type = 'R$'
 page = 'topsellers'
 
+Options = Options()
+Options.headless = True
+
 
 def get_price(class_name, soup) -> str:
     value = soup.find(class_=class_name).getText().replace('\n', '').strip() or 'None'
     if money_type in value:
         value = value.split(money_type)
         del value[0]
-        for index, _ in enumerate(range(len(value))):
+        for index in range(len(value)):
             value[index] = f'{money_type}{value[index]}'
         if len(value) == 2:
             return f'{value[0]} --> {value[1]}'
@@ -41,7 +45,7 @@ def get_price(class_name, soup) -> str:
 @timeit
 def get_games():
     g = Game()
-    browser = webdriver.Firefox()
+    browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
 
     # browser.find_element(

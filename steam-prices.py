@@ -3,6 +3,7 @@ from subprocess import run
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
+from re import sub
 from datetime import datetime
 from bs4 import BeautifulSoup as bs4
 from decorators.decorators import timeit
@@ -110,8 +111,13 @@ def price_sorted(arr):
     local_arr = [{'price': el[columns_global['discounted_price']], 'index': index}
                  for index, el in enumerate(arr)]
     for el in local_arr:
-        el['price'] = int(el['price'].replace(
-            money_type_global, '').replace(',', '').replace('.', '').strip())
+        el['price'] = int(sub('[a-zA-Z]+', '', el['price']
+                              .replace(money_type_global, '')
+                              .replace(',', '')
+                              .replace('.', '')
+                              .replace(' ', '')
+                              .strip()) or 0
+                          )
     local_arr = sorted(local_arr, key=lambda k: k['price'])
     final_arr = []
     for el in local_arr:

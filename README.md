@@ -4,6 +4,13 @@ This application was created aiming into learning how to use Python web crawlers
 
 For now it has support for Real `R$` and Dollar `$` prices.
 
+### Features
+- Real and Dollar prices.
+- Sort by Name, Price, and Discount.
+- Search games from New Releases, Top Sellers, and Upcoming pages from Steam.
+- Set the number of pages to be scraped.
+- Output to a CSV file.
+
 ### Requirements
 
 ```

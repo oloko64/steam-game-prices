@@ -119,6 +119,13 @@ def price_sorted(arr):
     return final_arr
 
 
+def remove_non_discounts(arr):
+    for el in arr:
+        if el['original_price'] == el['discounted_price']:
+            el['discounted_price'] = '---'
+    return arr
+
+
 def export_csv():
     header_info = ['name', 'discount', 'original_price',
                    'discounted_price', 'release_date']
@@ -130,6 +137,7 @@ def export_csv():
         "release_date": "Release Date"
     }
     games_sorted = sorted_games(games_global)
+    games_sorted = remove_non_discounts(games_sorted)
     games_sorted.insert(0, header_info_print)
     with open(file_name, 'w') as csvfile:
         writer = DictWriter(csvfile, fieldnames=header_info, delimiter=',')

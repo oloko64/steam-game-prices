@@ -9,7 +9,7 @@ from decorators.decorators import timeit
 from selenium.webdriver.firefox.options import Options
 
 
-class Game ():
+class Game:
     def __init__(self, name='', discounted_price='', link='', original_price='', date='', discount=''):
         self.name = name
         self.discounted_price = discounted_price
@@ -19,30 +19,21 @@ class Game ():
         self.discount = discount
 
 
-# Global variables
-games = []
-money_types = {
-    "real": "R$",
-    "dollar": "$"
-}
-
-
-Options = Options()
-Options.headless = True
-
-
 def define_money(value):
-    if money_types['real'] in value:
-        return money_types['real']
-    elif money_types['dollar'] in value:
-        return money_types['dollar']
+    if money_types_global['real'] in value:
+        return money_types_global['real']
+    elif money_types_global['dollar'] in value:
+        return money_types_global['dollar']
     return None
 
 
 def get_price(class_name, soup, price_type=None) -> str:
+    global money_type_global
     value = soup.find(class_=class_name).getText().replace(
         '\n', '').strip() or 'None'
     money_type = define_money(value)
+    if money_type:
+        money_type_global = money_type
     if money_type:
         value = value.split(money_type)
         del value[0]
@@ -51,11 +42,7 @@ def get_price(class_name, soup, price_type=None) -> str:
         if len(value) == 2:
             if price_type == 'discounted_price':
                 return value[1]
-            elif price_type == 'original_price':
-                return value[0]
-        elif price_type == 'original_price':
-            return value[0]
-        return '---'
+        return value[0]
     elif '%' or 'None' in value:
         return value
     else:
@@ -64,6 +51,7 @@ def get_price(class_name, soup, price_type=None) -> str:
 
 @timeit
 def get_games():
+    global games_global
     g = Game()
     browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
@@ -92,7 +80,7 @@ def get_games():
             g.discount = get_price('search_discount', row)
             g.date = row.find(class_='search_released').getText()
 
-            games.append(
+            games_global.append(
                 {
                     "name": g.name,
                     "original_price": g.original_price,
@@ -105,7 +93,7 @@ def get_games():
         except IndexError:
             break
     print()
-    print(f'{len(games)} games found!')
+    print(f'{len(games_global)} games found!')
 
 
 def current_date():
@@ -113,16 +101,39 @@ def current_date():
 
 
 def sorted_games(arr):
+    if sort_column == 'discounted_price':
+        return price_sorted(arr)
     return sorted(arr, key=lambda k: k[sort_column])
+
+
+def price_sorted(arr):
+    local_arr = [{"price": el['discounted_price'], "index": index}
+                 for index, el in enumerate(arr)]
+    for el in local_arr:
+        el["price"] = int(el["price"].replace(
+            money_type_global, '').replace(',', '').replace('.', '').strip())
+    local_arr = sorted(local_arr, key=lambda k: k['price'])
+    final_arr = []
+    for el in local_arr:
+        final_arr.append(arr[el['index']])
+    return final_arr
 
 
 def export_csv():
     header_info = ['name', 'discount', 'original_price',
                    'discounted_price', 'release_date']
+    header_info_print = {
+        "name": "Name",
+        "discount": "Discount",
+        "original_price": "Original Price",
+        "discounted_price": "Discounted Price",
+        "release_date": "Release Date"
+    }
+    games_sorted = sorted_games(games_global)
+    games_sorted.insert(0, header_info_print)
     with open(file_name, 'w') as csvfile:
-        writer = DictWriter(csvfile, fieldnames=header_info)
-        writer.writeheader()
-        writer.writerows(sorted_games(games))
+        writer = DictWriter(csvfile, fieldnames=header_info, delimiter=',')
+        writer.writerows(games_sorted)
 
 
 def separator():
@@ -139,28 +150,25 @@ def page_chooser():
     print('3 - Upcoming')
     print()
     choose_page = int(input('Selected number: ') or 1)
-    if choose_page == 1:
-        page = 'topsellers'
-    elif choose_page == 2:
-        page = 'newreleases'
+    page_local = 'topsellers'
+    if choose_page == 2:
+        page_local = 'newreleases'
     elif choose_page == 3:
-        page = 'upcoming'
-    else:
-        page = 'topsellers'
+        page_local = 'upcoming'
 
     separator()
 
     print('It will be sorted by:')
-    print('1 - Discount (Default)')
-    print('2 - Name')
+    print('1 - Price (Default)')
+    print('2 - Discount')
+    print('3 - Name')
     print()
     choose_sort = int(input('Selected number: ') or 1)
-    if choose_sort == 1:
-        sort_column = 'discount'
-    elif choose_sort == 2:
-        sort_column = 'name'
-    else:
-        sort_column = 'discount'
+    sort_column_local = 'discounted_price'
+    if choose_sort == 2:
+        sort_column_local = 'discount'
+    elif choose_sort == 3:
+        sort_column_local = 'name'
 
     separator()
 
@@ -170,13 +178,13 @@ def page_chooser():
     separator()
 
     print('Gathering data from Steam...')
-    return page, num_pages, sort_column
+    return page_local, num_pages, sort_column_local
 
 
 def ask_open():
     separator()
-    open = input('Do you want to open the file? (Y/n)').lower() or 'y'
-    if open == 'y' or open == 'yes':
+    open_file = input('Do you want to open the file? (Y/n)').lower() or 'y'
+    if open_file == 'y' or open_file == 'yes':
         run(['xdg-open',  f'{file_name}'])
     else:
         separator()
@@ -184,6 +192,17 @@ def ask_open():
 
 
 if __name__ == '__main__':
+    # Global variables
+    games_global = []
+    money_types_global = {
+        "real": "R$",
+        "dollar": "$"
+    }
+    money_type_global = ''
+
+    Options = Options()
+    Options.headless = True
+
     page, pages_to_search, sort_column = page_chooser()
     file_name = f'{page}-{current_date()}.csv'
     get_games()

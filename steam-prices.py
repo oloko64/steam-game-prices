@@ -21,10 +21,9 @@ class Game:
 
 
 def define_money(value):
-    if money_types_global['real'] in value:
-        return money_types_global['real']
-    elif money_types_global['dollar'] in value:
-        return money_types_global['dollar']
+    for money in money_types_global.values():
+        if money in value:
+            return money
     return None
 
 

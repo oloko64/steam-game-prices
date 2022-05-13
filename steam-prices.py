@@ -210,7 +210,7 @@ def ask_open():
 
 
 if __name__ == '__main__':
-    # Global variables
+    # Global variables.
     games_global = []
     page_types_global = {
         'top_sellers': 'topsellers',
@@ -230,9 +230,11 @@ if __name__ == '__main__':
     }
     money_type_global = ''
 
+    # Set browser to run in background.
     Options = Options()
     Options.headless = True
 
+    # Main functions.
     page, pages_to_search, sort_column = page_chooser()
     file_name = f'{page}-{current_date()}.csv'
     get_games()

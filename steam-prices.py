@@ -40,7 +40,7 @@ def get_price(class_name, soup, price_type=None) -> str:
         for index in range(len(value)):
             value[index] = f'{money_type}{value[index]}'
         if len(value) == 2:
-            if price_type == 'discounted_price':
+            if price_type == columns_global['discounted_price']:
                 return value[1]
         return value[0]
     elif '%' or 'None' in value:
@@ -58,7 +58,7 @@ def get_games():
 
     for i in range(pages_to_search - 1):
         browser.execute_script(
-            "window.scrollTo(0, document.body.scrollHeight);")
+            'window.scrollTo(0, document.body.scrollHeight);')
         sleep(0.8)
 
     offers = browser.find_elements(By.CLASS_NAME, 'search_results')[
@@ -76,17 +76,17 @@ def get_games():
             g.name = row.find(class_='title').getText()
             g.original_price = get_price('search_price', row, 'original_price')
             g.discounted_price = get_price(
-                'search_price', row, 'discounted_price')
+                'search_price', row, columns_global['discounted_price'])
             g.discount = get_price('search_discount', row)
             g.date = row.find(class_='search_released').getText()
 
             games_global.append(
                 {
-                    "name": g.name,
-                    "original_price": g.original_price,
-                    "discounted_price": g.discounted_price,
-                    "discount": g.discount,
-                    "release_date": g.date or 'Not Declared'
+                    columns_global['name']: g.name,
+                    columns_global['original_price']: g.original_price,
+                    columns_global['discounted_price']: g.discounted_price,
+                    columns_global['discount']: g.discount,
+                    columns_global['release_date']: g.date or 'Not Declared'
                 }
             )
             print(f'-> {g.name}')
@@ -101,16 +101,16 @@ def current_date():
 
 
 def sorted_games(arr):
-    if sort_column == 'discounted_price':
+    if sort_column == columns_global['discounted_price']:
         return price_sorted(arr)
     return sorted(arr, key=lambda k: k[sort_column])
 
 
 def price_sorted(arr):
-    local_arr = [{"price": el['discounted_price'], "index": index}
+    local_arr = [{'price': el[columns_global['discounted_price']], 'index': index}
                  for index, el in enumerate(arr)]
     for el in local_arr:
-        el["price"] = int(el["price"].replace(
+        el['price'] = int(el['price'].replace(
             money_type_global, '').replace(',', '').replace('.', '').strip())
     local_arr = sorted(local_arr, key=lambda k: k['price'])
     final_arr = []
@@ -121,20 +121,25 @@ def price_sorted(arr):
 
 def remove_non_discounts(arr):
     for el in arr:
-        if el['original_price'] == el['discounted_price']:
-            el['discounted_price'] = '---'
+        if el[columns_global['original_price']] == el[columns_global['discounted_price']]:
+            el[columns_global['discounted_price']] = '---'
     return arr
 
 
 def export_csv():
-    header_info = ['name', 'discount', 'original_price',
-                   'discounted_price', 'release_date']
+    header_info = [
+        columns_global['name'],
+        columns_global['discount'],
+        columns_global['original_price'],
+        columns_global['discounted_price'],
+        columns_global['release_date']
+    ]
     header_info_print = {
-        "name": "Name",
-        "discount": "Discount",
-        "original_price": "Original Price",
-        "discounted_price": "Discounted Price",
-        "release_date": "Release Date"
+        header_info[0]: 'Name',
+        header_info[1]: 'Discount',
+        header_info[2]: 'Original Price',
+        header_info[3]: 'Discounted Price',
+        header_info[4]: 'Release Date'
     }
     games_sorted = sorted_games(games_global)
     games_sorted = remove_non_discounts(games_sorted)
@@ -158,11 +163,11 @@ def page_chooser():
     print('3 - Upcoming')
     print()
     choose_page = int(input('Selected number: ') or 1)
-    page_local = 'topsellers'
+    page_local = page_types_global['top_sellers']
     if choose_page == 2:
-        page_local = 'newreleases'
+        page_local = page_types_global['new_releases']
     elif choose_page == 3:
-        page_local = 'upcoming'
+        page_local = page_types_global['upcoming']
 
     separator()
 
@@ -172,11 +177,11 @@ def page_chooser():
     print('3 - Name')
     print()
     choose_sort = int(input('Selected number: ') or 1)
-    sort_column_local = 'discounted_price'
+    sort_column_local = columns_global['discounted_price']
     if choose_sort == 2:
-        sort_column_local = 'discount'
+        sort_column_local = columns_global['discount']
     elif choose_sort == 3:
-        sort_column_local = 'name'
+        sort_column_local = columns_global['name']
 
     separator()
 
@@ -202,9 +207,21 @@ def ask_open():
 if __name__ == '__main__':
     # Global variables
     games_global = []
+    page_types_global = {
+        'top_sellers': 'topsellers',
+        'new_releases': 'newreleases',
+        'upcoming': 'upcoming'
+    }
+    columns_global = {
+        'name': 'name',
+        'discount': 'discount',
+        'original_price': 'original_price',
+        'discounted_price': 'discounted_price',
+        'release_date': 'release_date'
+    }
     money_types_global = {
-        "real": "R$",
-        "dollar": "$"
+        'real': 'R$',
+        'dollar': '$'
     }
     money_type_global = ''
 

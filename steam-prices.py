@@ -9,16 +9,7 @@ from bs4 import BeautifulSoup as bs4
 from decorators.decorators import timeit
 from selenium.webdriver.firefox.options import Options
 from multiprocessing import Process, Queue
-
-
-class Game:
-    def __init__(self, name='', discounted_price='', link='', original_price='', date='', discount=''):
-        self.name = name
-        self.discounted_price = discounted_price
-        self.link = link
-        self.original_price = original_price
-        self.date = date
-        self.discount = discount
+from classes.classes import Game
 
 
 def define_money(value):
@@ -29,7 +20,6 @@ def define_money(value):
 
 
 def get_price(class_name, soup, price_type=None) -> str:
-    global money_type_global
     value = soup.find(class_=class_name).getText().replace(
         '\n', '').strip() or 'None'
     money_type = define_money(value)
@@ -49,31 +39,32 @@ def get_price(class_name, soup, price_type=None) -> str:
 
 
 def get_item_soup(soup, initial_index, final_index):
+    game = Game()
     games_local = []
     for i in range(initial_index, initial_index + final_index):
         try:
             row = soup.find_all(class_='search_result_row')[i]
 
-            g.name = row.find(class_='title').getText()
-            g.original_price = get_price('search_price', row, 'original_price')
-            g.discounted_price = get_price(
+            game.name = row.find(class_='title').getText()
+            game.original_price = get_price('search_price', row, 'original_price')
+            game.discounted_price = get_price(
                 'search_price', row, columns_global['discounted_price'])
-            g.discount = get_price('search_discount', row)
-            g.date = row.find(class_='search_released').getText()
+            game.discount = get_price('search_discount', row)
+            game.date = row.find(class_='search_released').getText()
 
             games_local.append(
                 {
-                    columns_global['name']: g.name,
-                    columns_global['original_price']: g.original_price,
-                    columns_global['discounted_price']: g.discounted_price,
-                    columns_global['discount']: g.discount,
-                    columns_global['release_date']: g.date or 'Not Declared'
+                    columns_global['name']: game.name,
+                    columns_global['original_price']: game.original_price,
+                    columns_global['discounted_price']: game.discounted_price,
+                    columns_global['discount']: game.discount,
+                    columns_global['release_date']: game.date or 'Not Declared'
                 }
             )
-            print(f'-> {g.name}')
+            print(f'-> {game.name}')
         except IndexError:
             break
-    q.put(games_local)
+    queue.put(games_local)
 
 
 @timeit
@@ -98,13 +89,14 @@ def get_games():
     initial_index = []
     for i in range(threads_global):
         initial_index.append(int(i * divisor))
-    threads = [Process(target=get_item_soup, args=(soup, initial_index[i], divisor)) for i in range(threads_global)]
+    threads = [Process(target=get_item_soup, args=(
+        soup, initial_index[i], divisor)) for i in range(threads_global)]
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
     for i in range(threads_global):
-        for j in q.get():
+        for j in queue.get():
             games_global.append(j)
     print()
     print(f'{len(games_global)} games found!')
@@ -121,27 +113,27 @@ def sorted_games(arr):
 
 
 def price_sorted(arr):
-    local_arr = [{'price': el[columns_global['discounted_price']], 'index': index}
-                 for index, el in enumerate(arr)]
-    for el in local_arr:
-        el['price'] = int(sub('[a-zA-Z]+', '', el['price']
-                              .replace('$', '')
-                              .replace(',', '')
-                              .replace('.', '')
-                              .replace(' ', '')
-                              .strip()) or 0
-                          )
+    local_arr = [{'price': item[columns_global['discounted_price']], 'index': index}
+                 for index, item in enumerate(arr)]
+    for item in local_arr:
+        item['price'] = int(sub('[a-zA-Z]+', '', item['price']
+                                .replace('$', '')
+                                .replace(',', '')
+                                .replace('.', '')
+                                .replace(' ', '')
+                                .strip()) or 0
+                            )
     local_arr = sorted(local_arr, key=lambda k: k['price'])
     final_arr = []
-    for el in local_arr:
-        final_arr.append(arr[el['index']])
+    for game in local_arr:
+        final_arr.append(arr[game['index']])
     return final_arr
 
 
 def remove_non_discounts(arr):
-    for el in arr:
-        if el[columns_global['original_price']] == el[columns_global['discounted_price']]:
-            el[columns_global['discounted_price']] = '---'
+    for item in arr:
+        if item[columns_global['original_price']] == item[columns_global['discounted_price']]:
+            item[columns_global['discounted_price']] = '---'
     return arr
 
 
@@ -246,8 +238,7 @@ if __name__ == '__main__':
     # The value has to be a multiple of 5.
     threads_global = 5
 
-    g = Game()
-    q = Queue()
+    queue = Queue()
 
     # Set browser to run in background.
     Options = Options()

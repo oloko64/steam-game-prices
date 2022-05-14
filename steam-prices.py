@@ -94,26 +94,16 @@ def get_games():
     print()
     print(f'Parsing data from {pages_to_search * 50} games...')
     print()
-    divisor = int((pages_to_search * 50) / 5)
+    divisor = int((pages_to_search * 50) / threads_global)
     initial_index = []
-    for i in range(5):
+    for i in range(threads_global):
         initial_index.append(int(i * divisor))
-    p1 = Process(target=get_item_soup, args=(soup, initial_index[0], divisor))
-    p2 = Process(target=get_item_soup, args=(soup, initial_index[1], divisor))
-    p3 = Process(target=get_item_soup, args=(soup, initial_index[2], divisor))
-    p4 = Process(target=get_item_soup, args=(soup, initial_index[3], divisor))
-    p5 = Process(target=get_item_soup, args=(soup, initial_index[4], divisor))
-    p1.start()
-    p2.start()
-    p3.start()
-    p4.start()
-    p5.start()
-    p1.join()
-    p2.join()
-    p3.join()
-    p4.join()
-    p5.join()
-    for i in range(5):
+    threads = [Process(target=get_item_soup, args=(soup, initial_index[i], divisor)) for i in range(threads_global)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    for i in range(threads_global):
         for j in q.get():
             games_global.append(j)
     print()
@@ -230,7 +220,7 @@ def ask_open():
         run(['xdg-open', f'{file_name}'])
     else:
         separator()
-        print(f'File saved as: {file_name}.csv')
+        print(f'File saved as: {file_name}')
 
 
 if __name__ == '__main__':
@@ -252,6 +242,9 @@ if __name__ == '__main__':
         'real': 'R$',
         'dollar': '$'
     }
+    # Not much performance improvement having a value above 5.
+    # The value has to be a multiple of 5.
+    threads_global = 5
 
     g = Game()
     q = Queue()

@@ -8,6 +8,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup as bs4
 from decorators.decorators import timeit
 from selenium.webdriver.firefox.options import Options
+from multiprocessing import Process, Queue
 
 
 class Game:
@@ -33,8 +34,6 @@ def get_price(class_name, soup, price_type=None) -> str:
         '\n', '').strip() or 'None'
     money_type = define_money(value)
     if money_type:
-        money_type_global = money_type
-    if money_type:
         value = value.split(money_type)
         del value[0]
         for index in range(len(value)):
@@ -49,10 +48,36 @@ def get_price(class_name, soup, price_type=None) -> str:
         raise Exception('Your money type is not supported currently')
 
 
+def get_item_soup(soup, initial_index, final_index):
+    games_local = []
+    for i in range(initial_index, initial_index + final_index):
+        try:
+            row = soup.find_all(class_='search_result_row')[i]
+
+            g.name = row.find(class_='title').getText()
+            g.original_price = get_price('search_price', row, 'original_price')
+            g.discounted_price = get_price(
+                'search_price', row, columns_global['discounted_price'])
+            g.discount = get_price('search_discount', row)
+            g.date = row.find(class_='search_released').getText()
+
+            games_local.append(
+                {
+                    columns_global['name']: g.name,
+                    columns_global['original_price']: g.original_price,
+                    columns_global['discounted_price']: g.discounted_price,
+                    columns_global['discount']: g.discount,
+                    columns_global['release_date']: g.date or 'Not Declared'
+                }
+            )
+            print(f'-> {g.name}')
+        except IndexError:
+            break
+    q.put(games_local)
+
+
 @timeit
 def get_games():
-    global games_global
-    g = Game()
     browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
 
@@ -69,29 +94,28 @@ def get_games():
     print()
     print(f'Parsing data from {pages_to_search * 50} games...')
     print()
-    for i in range(pages_to_search * 50):
-        try:
-            row = soup.find_all(class_='search_result_row')[i]
-
-            g.name = row.find(class_='title').getText()
-            g.original_price = get_price('search_price', row, 'original_price')
-            g.discounted_price = get_price(
-                'search_price', row, columns_global['discounted_price'])
-            g.discount = get_price('search_discount', row)
-            g.date = row.find(class_='search_released').getText()
-
-            games_global.append(
-                {
-                    columns_global['name']: g.name,
-                    columns_global['original_price']: g.original_price,
-                    columns_global['discounted_price']: g.discounted_price,
-                    columns_global['discount']: g.discount,
-                    columns_global['release_date']: g.date or 'Not Declared'
-                }
-            )
-            print(f'-> {g.name}')
-        except IndexError:
-            break
+    divisor = int((pages_to_search * 50) / 5)
+    initial_index = []
+    for i in range(5):
+        initial_index.append(int(i * divisor))
+    p1 = Process(target=get_item_soup, args=(soup, initial_index[0], divisor))
+    p2 = Process(target=get_item_soup, args=(soup, initial_index[1], divisor))
+    p3 = Process(target=get_item_soup, args=(soup, initial_index[2], divisor))
+    p4 = Process(target=get_item_soup, args=(soup, initial_index[3], divisor))
+    p5 = Process(target=get_item_soup, args=(soup, initial_index[4], divisor))
+    p1.start()
+    p2.start()
+    p3.start()
+    p4.start()
+    p5.start()
+    p1.join()
+    p2.join()
+    p3.join()
+    p4.join()
+    p5.join()
+    for i in range(5):
+        for j in q.get():
+            games_global.append(j)
     print()
     print(f'{len(games_global)} games found!')
 
@@ -111,7 +135,7 @@ def price_sorted(arr):
                  for index, el in enumerate(arr)]
     for el in local_arr:
         el['price'] = int(sub('[a-zA-Z]+', '', el['price']
-                              .replace(money_type_global, '')
+                              .replace('$', '')
                               .replace(',', '')
                               .replace('.', '')
                               .replace(' ', '')
@@ -203,7 +227,7 @@ def ask_open():
     separator()
     open_file = input('Do you want to open the file? (Y/n)').lower() or 'y'
     if open_file == 'y' or open_file == 'yes':
-        run(['xdg-open',  f'{file_name}'])
+        run(['xdg-open', f'{file_name}'])
     else:
         separator()
         print(f'File saved as: {file_name}.csv')
@@ -228,7 +252,9 @@ if __name__ == '__main__':
         'real': 'R$',
         'dollar': '$'
     }
-    money_type_global = ''
+
+    g = Game()
+    q = Queue()
 
     # Set browser to run in background.
     Options = Options()

@@ -4,9 +4,7 @@ This application was created aiming into learning how to use Python web crawlers
 
 For now it has support for Real `R$` and Dollar `$` prices.
 
-
-https://user-images.githubusercontent.com/49915167/168483103-c971e57f-e189-4f46-baf7-f8cfaf5583ba.mp4
-
+https://user-images.githubusercontent.com/49915167/168497808-c0817b53-ab01-4b88-961d-c47f9146b04c.mp4
 
 ### Features
 - Real and Dollar prices.

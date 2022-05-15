@@ -23,7 +23,7 @@ tqdm
 
 Gecko Driver: https://github.com/mozilla/geckodriver/releases
 
-You need to install these two dependencies and add the Gecko Driver to your PATH.
+You need to install these three dependencies and add the Gecko Driver to your PATH.
 
 ### To Do
 

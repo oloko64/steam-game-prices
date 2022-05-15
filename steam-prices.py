@@ -8,7 +8,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup as bs4
 from decorators.decorators import timeit
 from selenium.webdriver.firefox.options import Options
-from multiprocessing import Process, Queue
+from multiprocessing import Pool
 from classes.classes import Game
 
 
@@ -38,66 +38,54 @@ def get_price(class_name, soup, price_type=None) -> str:
         raise Exception('Your money type is not supported currently')
 
 
-def get_item_soup(soup, initial_index, final_index):
+def get_item_soup(soup):
     game = Game()
-    games_local = []
-    for i in range(initial_index, initial_index + final_index):
-        try:
-            row = soup.find_all(class_='search_result_row')[i]
+    row = bs4(soup, 'html.parser')
 
-            game.name = row.find(class_='title').getText()
-            game.original_price = get_price('search_price', row, 'original_price')
-            game.discounted_price = get_price(
-                'search_price', row, columns_global['discounted_price'])
-            game.discount = get_price('search_discount', row)
-            game.date = row.find(class_='search_released').getText()
+    game.name = row.find(class_='title').getText()
+    game.original_price = get_price('search_price', row, 'original_price')
+    game.discounted_price = get_price(
+        'search_price', row, columns_global['discounted_price'])
+    game.discount = get_price('search_discount', row)
+    game.date = row.find(class_='search_released').getText()
 
-            games_local.append(
-                {
-                    columns_global['name']: game.name,
-                    columns_global['original_price']: game.original_price,
-                    columns_global['discounted_price']: game.discounted_price,
-                    columns_global['discount']: game.discount,
-                    columns_global['release_date']: game.date or 'Not Declared'
-                }
-            )
-            print(f'-> {game.name}')
-        except IndexError:
-            break
-    queue.put(games_local)
+    games_local = {
+        columns_global['name']: game.name,
+        columns_global['original_price']: game.original_price,
+        columns_global['discounted_price']: game.discounted_price,
+        columns_global['discount']: game.discount,
+        columns_global['release_date']: game.date or 'Not Declared'
+    }
+
+    print(f'-> {game.name}')
+    return games_local
 
 
 @timeit
 def get_games():
+    global games_global
     browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
-
+    print('-> Reading page 1')
     for i in range(pages_to_search - 1):
         browser.execute_script(
             'window.scrollTo(0, document.body.scrollHeight);')
+        print(f'-> Reading page {i + 2}')
         sleep(0.8)
 
     offers = browser.find_elements(By.CLASS_NAME, 'search_results')[
         0].get_attribute('innerHTML')
     browser.close()
     soup = bs4(offers, 'html.parser')
-
     print()
     print(f'Parsing data from {pages_to_search * 50} games...')
     print()
-    divisor = int((pages_to_search * 50) / threads_global)
-    initial_index = []
-    for i in range(threads_global):
-        initial_index.append(int(i * divisor))
-    threads = [Process(target=get_item_soup, args=(
-        soup, initial_index[i], divisor)) for i in range(threads_global)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    for i in range(threads_global):
-        for j in queue.get():
-            games_global.append(j)
+    p = Pool()
+    all_prices = p.map(get_item_soup, [str(item) for item in list(
+        soup.find_all(class_='search_result_row'))])
+    p.close()
+    p.join()
+    games_global = all_prices
     print()
     print(f'{len(games_global)} games found!')
 
@@ -201,7 +189,7 @@ def page_chooser():
 
     separator()
 
-    print('Gathering data from Steam...')
+    print('Connecting to Steam...')
     return page_local, num_pages, sort_column_local
 
 
@@ -237,8 +225,6 @@ if __name__ == '__main__':
     # Not much performance improvement having a value above 5.
     # The value has to be a multiple of 5.
     threads_global = 5
-
-    queue = Queue()
 
     # Set browser to run in background.
     Options = Options()

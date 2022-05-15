@@ -20,6 +20,7 @@ https://user-images.githubusercontent.com/49915167/168483103-c971e57f-e189-4f46-
 ```
 beautifulsoup4
 selenium
+tqdm
 ```
 
 Gecko Driver: https://github.com/mozilla/geckodriver/releases

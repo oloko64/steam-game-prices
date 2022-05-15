@@ -10,6 +10,7 @@ from decorators.decorators import timeit
 from selenium.webdriver.firefox.options import Options
 from multiprocessing import Pool
 from classes.classes import Game
+from tqdm import tqdm
 
 
 def define_money(value):
@@ -66,12 +67,12 @@ def get_games():
     global games_global
     browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
-    print('-> Reading page 1')
-    for i in range(pages_to_search - 1):
-        browser.execute_script(
-            'window.scrollTo(0, document.body.scrollHeight);')
-        print(f'-> Reading page {i + 2}')
-        sleep(0.8)
+    print()
+    for i in tqdm(range(0, pages_to_search), desc='Pages read'):
+        if i < pages_to_search - 1:
+            browser.execute_script(
+                'window.scrollTo(0, document.body.scrollHeight);')
+            sleep(0.8)
 
     offers = browser.find_elements(By.CLASS_NAME, 'search_results')[
         0].get_attribute('innerHTML')

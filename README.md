@@ -5,7 +5,7 @@ This application was created aiming into learning how to use Python web crawlers
 For now it has support for Real `R$` and Dollar `$` prices.
 
 
-https://user-images.githubusercontent.com/49915167/168408865-ca8082cc-fe93-4bcc-8f5f-b66e376fc45e.mp4
+![](assets/steam-crawler-video.mp4)
 
 
 ### Features

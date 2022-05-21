@@ -4,9 +4,7 @@ This application was created aiming into learning how to use Python web crawlers
 
 For now it has support for Real `R$` and Dollar `$` prices.
 
-
-https://user-images.githubusercontent.com/49915167/168408865-ca8082cc-fe93-4bcc-8f5f-b66e376fc45e.mp4
-
+https://user-images.githubusercontent.com/49915167/168497808-c0817b53-ab01-4b88-961d-c47f9146b04c.mp4
 
 ### Features
 - Real and Dollar prices.
@@ -20,11 +18,12 @@ https://user-images.githubusercontent.com/49915167/168408865-ca8082cc-fe93-4bcc-
 ```
 beautifulsoup4
 selenium
+tqdm
 ```
 
 Gecko Driver: https://github.com/mozilla/geckodriver/releases
 
-You need to install these two dependencies and add the Gecko Driver to your PATH.
+You need to install these three dependencies and add the Gecko Driver to your PATH.
 
 ### To Do
 

@@ -12,14 +12,14 @@ from multiprocessing import Pool
 from classes.classes import Game
 
 
-def define_money(value):
+def define_money(value: str) -> str or None:
     for money in money_types_global.values():
         if money in value:
             return money
     return None
 
 
-def get_price(class_name, soup, price_type=None) -> str:
+def get_price(class_name: str, soup: any, price_type=None) -> str:
     value = soup.find(class_=class_name).getText().replace(
         '\n', '').strip() or 'None'
     money_type = define_money(value)
@@ -38,7 +38,7 @@ def get_price(class_name, soup, price_type=None) -> str:
         raise Exception('Your money type is not supported currently')
 
 
-def get_item_soup(soup):
+def get_item_soup(soup: str) -> dict:
     game = Game()
     row = bs4(soup, 'html.parser')
 
@@ -62,7 +62,7 @@ def get_item_soup(soup):
 
 
 @timeit
-def get_games():
+def get_games() -> None:
     global games_global
     browser = webdriver.Firefox(options=Options)
     browser.get(f'https://store.steampowered.com/search/?filter={page}')
@@ -90,17 +90,17 @@ def get_games():
     print(f'{len(games_global)} games found!')
 
 
-def current_date():
+def current_date() -> str:
     return str(datetime.now()).split('.')[0].replace(' ', '_').replace(':', '-')
 
 
-def sorted_games(arr):
+def sorted_games(arr: list) -> list:
     if sort_column == columns_global['discounted_price']:
         return price_sorted(arr)
     return sorted(arr, key=lambda k: k[sort_column])
 
 
-def price_sorted(arr):
+def price_sorted(arr: list) -> list:
     local_arr = [{'price': item[columns_global['discounted_price']], 'index': index}
                  for index, item in enumerate(arr)]
     for item in local_arr:
@@ -118,14 +118,14 @@ def price_sorted(arr):
     return final_arr
 
 
-def remove_non_discounts(arr):
+def remove_non_discounts(arr: list) -> list:
     for item in arr:
         if item[columns_global['original_price']] == item[columns_global['discounted_price']]:
             item[columns_global['discounted_price']] = '---'
     return arr
 
 
-def export_csv():
+def export_csv() -> None:
     header_info = [
         columns_global['name'],
         columns_global['discount'],
@@ -148,13 +148,13 @@ def export_csv():
         writer.writerows(games_sorted)
 
 
-def separator():
+def separator() -> None:
     print()
     print('####################################################')
     print()
 
 
-def page_chooser():
+def page_chooser() -> tuple:
     print()
     print('Choose a page to search:')
     print('1 - Top Sellers (Default)')
@@ -193,7 +193,7 @@ def page_chooser():
     return page_local, num_pages, sort_column_local
 
 
-def ask_open():
+def ask_open() -> None:
     separator()
     open_file = input('Do you want to open the file? (Y/n)').lower() or 'y'
     if open_file == 'y' or open_file == 'yes':

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+HERE="$(dirname "$(readlink -f "${0}")")"
+APP="${HERE}/usr/bin/src/steam-prices.py"
+INTERPRETER="${HERE}/usr/bin/venv/bin/python"
+
+eval "${INTERPRETER} ${APP}"

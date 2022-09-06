@@ -1,7 +1,13 @@
-#!/usr/bin/env bash
+#! /bin/bash
 
-HERE="$(dirname "$(readlink -f "${0}")")"
-APP="${HERE}/usr/bin/src/steam-prices.py"
-INTERPRETER="${HERE}/usr/bin/venv/bin/python"
+# If running from an extracted image, then export APPDIR
+if [ -z "${APPIMAGE}" ]; then
+    self="$(readlink -f -- $0)"
+    export APPDIR="${self%/*}"
+fi
 
-eval "${INTERPRETER} ${APP}"
+export PATH=$PATH:${APPDIR}/app/geckodriver
+
+# Call the application entry point
+${APPDIR}/usr/bin/python3.10 -sE ${APPDIR}/app/bin/src/steam-prices.py "$@"
+

@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=steam-prices
-Exec=crawler
+Exec=AppRun
 Icon=github-256x256
 Type=Application
 Categories=Utility

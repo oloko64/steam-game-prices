@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Check if the environment is already prepared.
+if [[ -d dependencies ]]; then
+    echo "The environment is already prepared. Recreating it..."
+    sleep 2
+    rm -rf ./dependencies
+fi
+
 # This script is used to prepare the environment for the build process.
 mkdir dependencies
 cd dependencies

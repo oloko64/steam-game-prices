@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# If running from an extracted image, then export APPDIR
+if [ -z "${APPIMAGE}" ]; then
+    self="$(readlink -f -- $0)"
+    export APPDIR="${self%/*}"
+fi
+
+export PATH=$PATH:${APPDIR}/app/geckodriver
+
+# Call the application entry point
+${APPDIR}/usr/bin/python3.11 -sE ${APPDIR}/app/bin/src/steam-prices.py "$@"

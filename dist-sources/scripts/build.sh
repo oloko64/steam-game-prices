@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+write_app_run () {
+    cat ./scripts/AppRun.sample > ./squashfs-root/AppRun
+}
+
 # Check if the environment is already prepared.
 if [[ ! -d dependencies ]]; then
     echo "The environment is not prepared. Please run 'make prepare-env' first."
@@ -21,6 +25,8 @@ wget https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodrive
 tar -xvf geckodriver-v0.31.0-linux64.tar.gz
 rm geckodriver-v0.31.0-linux64.tar.gz
 popd
+
+write_app_run
 
 mkdir -p ./dist
 pushd ./dist

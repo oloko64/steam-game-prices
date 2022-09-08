@@ -9,4 +9,4 @@ fi
 export PATH=$PATH:${APPDIR}/app/geckodriver
 
 # Call the application entry point
-${APPDIR}/usr/bin/python3.11 -sE ${APPDIR}/app/bin/src/steam-prices.py "$@"
+${APPDIR}/usr/bin/python3.10 -sE ${APPDIR}/app/src/steam-prices.py "$@"
